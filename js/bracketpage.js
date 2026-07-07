@@ -14,8 +14,10 @@
       return `<div class="team-row"><div class="team-id"><span class="flag">${team.flag}</span><span class="tname ${isWinner ? "winner" : ""}">${team.name}</span></div>${score}</div>`;
     }
     const line = result ? result.result : "Enter score ›";
+    const conditions = CONDITIONS.getConditions(fixture);
     return `<div class="bracket-match" data-id="${fixture.id}">
       <div class="match-meta"><span class="session">${fixture.session}</span>${status}</div>
+      <div class="conditions-tag">${CONDITIONS.describeConditionsShort(conditions)}</div>
       ${row(teamA)}${row(teamB)}
       <div class="match-result-line"><span>${line}</span><span class="more-link">${result ? "More ›" : ""}</span></div>
     </div>`;

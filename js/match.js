@@ -16,6 +16,9 @@
 
   const teamA = DATA.TEAMS_BY_CODE[fixture.teamA];
   const teamB = DATA.TEAMS_BY_CODE[fixture.teamB];
+  const conditions = CONDITIONS.getConditions(fixture);
+  const conditionsLine = CONDITIONS.describeConditions(conditions);
+  const isManual = RESOLVE.needsManualEntry(fixture);
 
   function fmtDate(dstr) {
     const d = new Date(dstr + "T00:00:00Z");
@@ -34,6 +37,7 @@
     document.getElementById("entryWrap").style.display = "block";
     document.getElementById("scoreSummary").innerHTML = `
       <div class="sub-line">${fmtDate(fixture.date)} · ${fixture.session} · ${fixture.time} · ${fixture.venue}</div>
+      <div class="sub-line">${conditionsLine}</div>
       <div class="team-row"><div class="team-id"><span class="flag" style="font-size:22px;">${teamA.flag}</span><span class="tname">${teamA.name}</span></div></div>
       <div class="team-row"><div class="team-id"><span class="flag" style="font-size:22px;">${teamB.flag}</span><span class="tname">${teamB.name}</span></div></div>
       <div class="result-line" style="color:var(--text-faint);">Not yet played — enter the result below</div>
@@ -56,6 +60,7 @@
 
     document.getElementById("scoreSummary").innerHTML = `
       <div class="sub-line">${fmtDate(fixture.date)} · ${fixture.session} · ${fixture.venue}</div>
+      <div class="sub-line">${conditionsLine}</div>
       ${rows}
       <div class="result-line">${m.result}</div>
     `;
@@ -112,8 +117,9 @@
       ${inningsSummaryBlock(m.innings[0])}
       ${inningsSummaryBlock(m.innings[1])}
       <div class="meta-block">
-        <div><b>${DATA.TEAMS_BY_CODE[m.toss.winner].name}</b> batted first</div>
+        <div><b>${DATA.TEAMS_BY_CODE[m.battingFirst].name}</b> batted first</div>
         <div><b>Venue:</b> ${m.venue}</div>
+        <div><b>Conditions:</b> ${CONDITIONS.describeConditions(m.conditions)}</div>
       </div>
     `;
   }
@@ -213,11 +219,16 @@
     })
   );
 
-  document.getElementById("editResultBtn").addEventListener("click", () => {
-    document.getElementById("tabsWrap").style.display = "none";
-    document.getElementById("entryWrap").style.display = "block";
-    ENTRYFORM.mountEntryForm(document.getElementById("entryWrap"), fixture, () => render());
-  });
+  const editBtn = document.getElementById("editResultBtn");
+  if (isManual) {
+    editBtn.addEventListener("click", () => {
+      document.getElementById("tabsWrap").style.display = "none";
+      document.getElementById("entryWrap").style.display = "block";
+      ENTRYFORM.mountEntryForm(document.getElementById("entryWrap"), fixture, () => render());
+    });
+  } else {
+    editBtn.style.display = "none";
+  }
 
   function showResult(m) {
     currentMatch = m;

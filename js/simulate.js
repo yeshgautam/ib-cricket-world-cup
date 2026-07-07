@@ -8,7 +8,7 @@
   }
 
   // Weighted outcome for one delivery faced (excludes wides/no-balls, handled by caller).
-  function pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, noWicket) {
+  function pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, noWicket, cond) {
     const diff = strikerBat - bowlerBowl;
     const factor = diff / 10;
     const w = { 0: 42, 1: 32, 2: 8, 3: 1, 4: 11, 6: 3, W: noWicket ? 0 : 5.5 };
@@ -34,6 +34,12 @@
       w[0] *= 1 - pressure * 0.15;
       if (!noWicket) w.W *= 1 + pressure * 0.3;
     }
+    if (cond) {
+      w[4] *= cond.boundary;
+      w[6] *= cond.boundary * cond.six;
+      w[0] *= cond.dot;
+      if (!noWicket) w.W *= cond.wicket;
+    }
     for (const k in w) w[k] = Math.max(0.3, w[k]);
 
     const pick = PRNG.weightedPick(w, rng);
@@ -41,7 +47,7 @@
     return { wicket: false, runs: Number(pick) };
   }
 
-  function ballOutcome(strikerBat, bowlerBowl, overNum, pressure, rng) {
+  function ballOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, cond) {
     const wideChance = 0.045 + Math.max(0, strikerBat - bowlerBowl) * 0.0003;
     const nbChance = 0.012;
     let x = rng();
@@ -51,7 +57,7 @@
     }
     x -= wideChance;
     if (x < nbChance) {
-      const bat = pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, true);
+      const bat = pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, true, cond);
       return { type: "noball", runs: 1 + bat.runs, batRuns: bat.runs, legal: false };
     }
     if (rng() < 0.02) {
@@ -59,7 +65,7 @@
       const r = rng() < 0.85 ? 1 : rng() < 0.7 ? 2 : 4;
       return { type: isLegBye ? "legbye" : "bye", runs: r, legal: true };
     }
-    const bat = pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, false);
+    const bat = pickBatOutcome(strikerBat, bowlerBowl, overNum, pressure, rng, false, cond);
     if (bat.wicket) return { type: "wicket", runs: 0, dismissal: pickDismissal(rng), legal: true };
     return { type: "run", runs: bat.runs, legal: true };
   }
@@ -77,7 +83,7 @@
     return { name: p.name, legalBalls: 0, overRuns: 0, maidens: 0, runs: 0, wickets: 0 };
   }
 
-  function simulateInnings(battingCode, bowlingCode, rng, winScore, events) {
+  function simulateInnings(battingCode, bowlingCode, rng, winScore, events, cond) {
     const battingSquad = DATA.SQUADS[battingCode].players;
     const bowlers = PRNG.shuffle(DATA.SQUADS[bowlingCode].bowlers, rng);
     const overBowler = [];
@@ -121,7 +127,7 @@
           }
         }
 
-        const outcome = ballOutcome(striker.bat, bowler.bowl, currentOver, pressure, rng);
+        const outcome = ballOutcome(striker.bat, bowler.bowl, currentOver, pressure, rng, cond);
         const overBallLabel = `${over}.${ballsThisOver + 1}`;
 
         if (outcome.type === "wide") {
@@ -263,6 +269,8 @@
     const rng = PRNG.rngFromString(fixture.id);
     const teamA = DATA.TEAMS_BY_CODE[fixture.teamA];
     const teamB = DATA.TEAMS_BY_CODE[fixture.teamB];
+    const conditions = CONDITIONS.getConditions(fixture);
+    const cond = CONDITIONS.conditionMultipliers(conditions);
 
     const tossWinner = rng() < 0.5 ? teamA.code : teamB.code;
     const tossDecision = rng() < 0.6 ? "bowl" : "bat";
@@ -270,10 +278,10 @@
     const bowlingFirst = battingFirst === teamA.code ? teamB.code : teamA.code;
 
     const events1 = [];
-    const innings1 = simulateInnings(battingFirst, bowlingFirst, rng, null, events1);
+    const innings1 = simulateInnings(battingFirst, bowlingFirst, rng, null, events1, cond);
     const winScore = innings1.total + 1;
     const events2 = [];
-    const innings2 = simulateInnings(bowlingFirst, battingFirst, rng, winScore, events2);
+    const innings2 = simulateInnings(bowlingFirst, battingFirst, rng, winScore, events2, cond);
 
     let result, winner, margin;
     if (innings2.total >= winScore) {
@@ -312,7 +320,9 @@
       teamA: teamA.code,
       teamB: teamB.code,
       toss: { winner: tossWinner, decision: tossDecision },
+      battingFirst,
       venue: fixture.venue,
+      conditions,
       innings: [innings1, innings2],
       result,
       winner,
@@ -322,7 +332,7 @@
     };
   }
 
-  const SIM = { simulateMatch };
+  const SIM = { simulateMatch, simulateInnings, computeImpact };
   if (typeof module !== "undefined") module.exports = SIM;
   else global.SIM = SIM;
 })(typeof window !== "undefined" ? window : globalThis);

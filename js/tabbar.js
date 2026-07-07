@@ -5,6 +5,7 @@
     { key: "bracket", label: "Bracket", href: "bracket.html" },
     { key: "stats", label: "Stats", href: "stats.html" },
     { key: "players", label: "Players", href: "players.html" },
+    { key: "nzstats", label: "NZ Stats", href: "nzstats.html" },
   ];
 
   function renderTabbar(activeKey) {

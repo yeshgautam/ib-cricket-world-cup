@@ -209,24 +209,30 @@
     };
   }
 
-  function buildMatchResult(fixture, entry) {
+  // The only manual-entry path: New Zealand's opponent always bats first and is fully
+  // auto-simulated (their batting AND New Zealand's bowling figures against them, via
+  // js/simulate.js). New Zealand bats second from the user's entered batting card; the
+  // opponent's bowling figures against New Zealand are derived the same way as any
+  // other autofilled innings.
+  function buildNZMatchResult(fixture, entry) {
     const seed = fixture.id + "|" + JSON.stringify(entry);
     const rng = PRNG.rngFromString(seed);
-    const battingFirst = entry.battingFirst;
-    const battingSecond = battingFirst === fixture.teamA ? fixture.teamB : fixture.teamA;
+    const opponentCode = fixture.teamA === "NZ" ? fixture.teamB : fixture.teamA;
+    const conditions = CONDITIONS.getConditions(fixture);
+    const cond = CONDITIONS.conditionMultipliers(conditions);
 
-    const inn1 = buildInnings(battingFirst, battingSecond, entry.innings[0].batters, rng);
-    const inn2 = buildInnings(battingSecond, battingFirst, entry.innings[1].batters, rng);
+    const oppInnings = SIM.simulateInnings(opponentCode, "NZ", rng, null, [], cond);
+    const nzInnings = buildInnings("NZ", opponentCode, entry.batters, rng);
 
     let winner, result, tied;
-    if (inn2.total > inn1.total) {
-      winner = inn2.battingTeam;
-      const wktsLeft = 10 - inn2.wickets;
-      result = `${DATA.TEAMS_BY_CODE[winner].name} won by ${wktsLeft > 0 ? wktsLeft : ""} wicket${wktsLeft === 1 ? "" : "s"}`.replace("  ", " ");
+    if (nzInnings.total > oppInnings.total) {
+      winner = "NZ";
+      const wktsLeft = 10 - nzInnings.wickets;
+      result = `New Zealand won by ${wktsLeft > 0 ? wktsLeft : ""} wicket${wktsLeft === 1 ? "" : "s"}`.replace("  ", " ");
       tied = false;
-    } else if (inn1.total > inn2.total) {
-      winner = inn1.battingTeam;
-      const margin = inn1.total - inn2.total;
+    } else if (oppInnings.total > nzInnings.total) {
+      winner = opponentCode;
+      const margin = oppInnings.total - nzInnings.total;
       result = `${DATA.TEAMS_BY_CODE[winner].name} won by ${margin} run${margin === 1 ? "" : "s"}`;
       tied = false;
     } else {
@@ -236,8 +242,8 @@
     }
 
     const scores = {};
-    computeImpact(inn1.battingCard, inn2.bowlingCard, scores);
-    computeImpact(inn2.battingCard, inn1.bowlingCard, scores);
+    computeImpact(oppInnings.battingCard, nzInnings.bowlingCard, scores);
+    computeImpact(nzInnings.battingCard, oppInnings.bowlingCard, scores);
     let potm = { name: "-", score: -1 };
     for (const name in scores) {
       let s = scores[name];
@@ -250,9 +256,10 @@
       fixture,
       teamA: fixture.teamA,
       teamB: fixture.teamB,
-      toss: { winner: battingFirst, decision: "bat" },
+      battingFirst: opponentCode,
       venue: fixture.venue,
-      innings: [inn1, inn2],
+      conditions,
+      innings: [oppInnings, nzInnings],
       result,
       winner,
       tied,
@@ -261,7 +268,7 @@
     };
   }
 
-  const AUTOFILL = { buildMatchResult, oversString };
+  const AUTOFILL = { buildNZMatchResult, oversString };
   if (typeof module !== "undefined") module.exports = AUTOFILL;
   else global.AUTOFILL = AUTOFILL;
 })(typeof window !== "undefined" ? window : globalThis);

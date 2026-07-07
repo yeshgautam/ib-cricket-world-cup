@@ -5,19 +5,21 @@
 (function (global) {
   const ENGLAND_FLAG = "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}";
 
+  // stadiumSize is a rough real-world read of each ground's boundary dimensions (not
+  // seating capacity) - e.g. Eden Park is famously short-sided despite decent capacity.
   const TEAMS = [
-    { code: "IND", name: "India", flag: "🇮🇳", rating: 96, venue: "Wankhede Stadium, Mumbai", color: "#1a4fa0" },
-    { code: "AUS", name: "Australia", flag: "🇦🇺", rating: 93, venue: "Melbourne Cricket Ground, Melbourne", color: "#e6b800" },
-    { code: "SA", name: "South Africa", flag: "🇿🇦", rating: 90, venue: "The Wanderers, Johannesburg", color: "#007749" },
-    { code: "ENG", name: "England", flag: ENGLAND_FLAG, rating: 89, venue: "Lord's, London", color: "#00247d" },
-    { code: "NZ", name: "New Zealand", flag: "🇳🇿", rating: 88, venue: "Eden Park, Auckland", color: "#222222" },
-    { code: "PAK", name: "Pakistan", flag: "🇵🇰", rating: 83, venue: "Gaddafi Stadium, Lahore", color: "#01411c" },
-    { code: "AFG", name: "Afghanistan", flag: "🇦🇫", rating: 80, venue: "Sharjah Cricket Stadium, Sharjah", color: "#0066b3" },
-    { code: "SL", name: "Sri Lanka", flag: "🇱🇰", rating: 78, venue: "R. Premadasa Stadium, Colombo", color: "#0b4ea2" },
-    { code: "WI", name: "West Indies", flag: "🏏", rating: 75, venue: "Kensington Oval, Bridgetown", color: "#7b0d1e" },
-    { code: "BAN", name: "Bangladesh", flag: "🇧🇩", rating: 74, venue: "Sher-e-Bangla Stadium, Dhaka", color: "#006a4e" },
-    { code: "ZIM", name: "Zimbabwe", flag: "🇿🇼", rating: 66, venue: "Harare Sports Club, Harare", color: "#d40000" },
-    { code: "IRE", name: "Ireland", flag: "🇮🇪", rating: 63, venue: "Malahide Cricket Club, Dublin", color: "#169b62" },
+    { code: "IND", name: "India", flag: "🇮🇳", rating: 96, venue: "Wankhede Stadium, Mumbai", color: "#1a4fa0", stadiumSize: "Small" },
+    { code: "AUS", name: "Australia", flag: "🇦🇺", rating: 93, venue: "Melbourne Cricket Ground, Melbourne", color: "#e6b800", stadiumSize: "Big" },
+    { code: "SA", name: "South Africa", flag: "🇿🇦", rating: 90, venue: "The Wanderers, Johannesburg", color: "#007749", stadiumSize: "Big" },
+    { code: "ENG", name: "England", flag: ENGLAND_FLAG, rating: 89, venue: "Lord's, London", color: "#00247d", stadiumSize: "Big" },
+    { code: "NZ", name: "New Zealand", flag: "🇳🇿", rating: 88, venue: "Eden Park, Auckland", color: "#222222", stadiumSize: "Small" },
+    { code: "PAK", name: "Pakistan", flag: "🇵🇰", rating: 83, venue: "Gaddafi Stadium, Lahore", color: "#01411c", stadiumSize: "Big" },
+    { code: "AFG", name: "Afghanistan", flag: "🇦🇫", rating: 80, venue: "Sharjah Cricket Stadium, Sharjah", color: "#0066b3", stadiumSize: "Small" },
+    { code: "SL", name: "Sri Lanka", flag: "🇱🇰", rating: 78, venue: "R. Premadasa Stadium, Colombo", color: "#0b4ea2", stadiumSize: "Small" },
+    { code: "WI", name: "West Indies", flag: "🏏", rating: 75, venue: "Kensington Oval, Bridgetown", color: "#7b0d1e", stadiumSize: "Big" },
+    { code: "BAN", name: "Bangladesh", flag: "🇧🇩", rating: 74, venue: "Sher-e-Bangla Stadium, Dhaka", color: "#006a4e", stadiumSize: "Small" },
+    { code: "ZIM", name: "Zimbabwe", flag: "🇿🇼", rating: 66, venue: "Harare Sports Club, Harare", color: "#d40000", stadiumSize: "Small" },
+    { code: "IRE", name: "Ireland", flag: "🇮🇪", rating: 63, venue: "Malahide Cricket Club, Dublin", color: "#169b62", stadiumSize: "Small" },
   ];
 
   const TEAMS_BY_CODE = {};

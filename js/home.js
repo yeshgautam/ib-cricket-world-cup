@@ -35,8 +35,10 @@
 
     const resultLine = result ? result.result : `${fixture.time} · ${fixture.venue}`;
     const actionLabel = result ? "More ›" : "Enter score ›";
+    const conditions = CONDITIONS.getConditions(fixture);
     return `<div class="match-block" data-id="${fixture.id}">
       <div class="match-meta"><span class="session">${fixture.session} · ${fixture.time}</span>${statusHtml}</div>
+      <div class="conditions-tag">${CONDITIONS.describeConditionsShort(conditions)}</div>
       ${row(teamA)}
       ${row(teamB)}
       <div class="match-result-line"><span>${resultLine}</span><span class="more-link">${actionLabel}</span></div>
@@ -120,8 +122,10 @@
       }
       const actionLabel = m.result ? "More ›" : "Enter score ›";
       const resultLine = m.result ? m.result.result : `${m.fixture.time} · ${m.fixture.venue}`;
+      const conditions = CONDITIONS.getConditions(m.fixture);
       return `<div class="match-block" data-id="${m.fixture.id}" style="border-right:none; border-top:1px solid var(--border);">
         <div class="match-meta"><span class="session">${fmtDate(m.fixture.date)} · ${m.fixture.session}</span><span class="status" style="color:${statusColor};">${outcome}</span></div>
+        <div class="conditions-tag">${CONDITIONS.describeConditionsShort(conditions)}</div>
         <div class="team-row"><div class="team-id"><span class="flag">${oppTeam.flag}</span><span class="tname">vs ${oppTeam.name}</span></div></div>
         <div class="match-result-line"><span>${resultLine}</span><span class="more-link">${actionLabel}</span></div>
       </div>`;

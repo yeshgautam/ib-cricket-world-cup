@@ -1,9 +1,12 @@
-// The manual scorecard entry form: runs / 4s / 6s / out-or-not / (optional) over of
-// dismissal per batter. Everything else (balls faced, extras, bowling figures, dismissal
-// text, Player of the Match) is derived by js/autofill.js.
+// The manual scorecard entry form - New Zealand's batting only. The opponent always
+// bats first and is fully auto-simulated (their batting and New Zealand's bowling
+// figures against them); here you enter New Zealand's runs / 4s / 6s / out-or-not per
+// batter (plus an optional over-of-dismissal). Everything else - balls faced, the
+// opponent's bowling figures against New Zealand, dismissal text, Player of the Match -
+// is derived automatically (js/autofill.js).
 (function (global) {
-  function teamBlockHtml(code, existingBatters) {
-    const squad = DATA.SQUADS[code].players;
+  function battingTableHtml(existingBatters) {
+    const squad = DATA.SQUADS.NZ.players;
     const rows = squad
       .map((p, i) => {
         const be = (existingBatters && existingBatters[i]) || { status: "dnb", runs: 0, fours: 0, sixes: 0, overOut: "" };
@@ -22,14 +25,14 @@
       </tr>`;
       })
       .join("");
-    return `<table class="entry-table" data-team="${code}">
+    return `<table class="entry-table" data-team="NZ">
       <thead><tr><th>Batter</th><th>Status</th><th>R</th><th>4s</th><th>6s</th><th>Over out</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="entry-totals">Total so far: <b class="live-total">0</b> runs off <b class="live-wkts">0</b> wicket(s)</div>`;
   }
 
-  function readTeamBlock(tableEl) {
+  function readBattingTable(tableEl) {
     const batters = [];
     tableEl.querySelectorAll("tbody tr").forEach((tr) => {
       const status = tr.querySelector(".status-sel").value;
@@ -58,35 +61,19 @@
     wrap.querySelector(".live-wkts").textContent = wkts;
   }
 
-  // renders into `container`, calls onSaved(entry) after a successful save
+  // renders into `container`, calls onSaved(entry) after a successful save. `fixture`
+  // must involve NZ - this form only ever collects New Zealand's batting.
   function mountEntryForm(container, fixture, onSaved) {
-    const teamA = DATA.TEAMS_BY_CODE[fixture.teamA];
-    const teamB = DATA.TEAMS_BY_CODE[fixture.teamB];
+    const opponentCode = fixture.teamA === "NZ" ? fixture.teamB : fixture.teamA;
+    const opponent = DATA.TEAMS_BY_CODE[opponentCode];
     const existing = STORE.getEntry(fixture.id);
-    const existingBattingFirst = existing ? existing.battingFirst : fixture.teamA;
-    const existingByCode = {};
-    if (existing) {
-      existingByCode[existing.battingFirst] = existing.innings[0].batters;
-      const second = existing.battingFirst === fixture.teamA ? fixture.teamB : fixture.teamA;
-      existingByCode[second] = existing.innings[1].batters;
-    }
 
     container.innerHTML = `
       <div class="entry-section">
-        <div class="entry-row-inline">
-          <label><b>Who batted first?</b></label>
-          <select id="battingFirstSel">
-            <option value="${teamA.code}" ${existingBattingFirst === teamA.code ? "selected" : ""}>${teamA.flag} ${teamA.name}</option>
-            <option value="${teamB.code}" ${existingBattingFirst === teamB.code ? "selected" : ""}>${teamB.flag} ${teamB.name}</option>
-          </select>
-        </div>
-        <div class="hint">Enter runs / 4s / 6s and whether each batter got out. Everything else (balls faced, extras, bowling figures, dismissals, Player of the Match) is filled in automatically.</div>
+        <div class="hint">${opponent.flag} ${opponent.name} bat first (auto-simulated). Enter New Zealand's runs / 4s / 6s and whether each batter got out - balls faced, extras, ${opponent.name}'s bowling figures, dismissals, and Player of the Match are all filled in automatically.</div>
 
-        <h3>${teamA.flag} ${teamA.name}</h3>
-        ${teamBlockHtml(teamA.code, existingByCode[teamA.code])}
-
-        <h3>${teamB.flag} ${teamB.name}</h3>
-        ${teamBlockHtml(teamB.code, existingByCode[teamB.code])}
+        <h3>🇳🇿 New Zealand batting</h3>
+        ${battingTableHtml(existing ? existing.batters : null)}
       </div>
       <div class="entry-actions">
         <button class="pill-btn primary" id="saveResultBtn">Save result</button>
@@ -94,29 +81,19 @@
       </div>
     `;
 
-    const tables = container.querySelectorAll(".entry-table");
-    tables.forEach((t) => {
-      updateLiveTotal(t);
-      t.addEventListener("input", () => updateLiveTotal(t));
-      t.addEventListener("change", () => updateLiveTotal(t));
-    });
+    const table = container.querySelector(".entry-table");
+    updateLiveTotal(table);
+    table.addEventListener("input", () => updateLiveTotal(table));
+    table.addEventListener("change", () => updateLiveTotal(table));
 
     container.querySelector("#saveResultBtn").addEventListener("click", () => {
-      const battingFirst = container.querySelector("#battingFirstSel").value;
-      const battingSecond = battingFirst === teamA.code ? teamB.code : teamA.code;
-      const firstTable = container.querySelector(`.entry-table[data-team="${battingFirst}"]`);
-      const secondTable = container.querySelector(`.entry-table[data-team="${battingSecond}"]`);
-      const entry = {
-        battingFirst,
-        innings: [{ batters: readTeamBlock(firstTable) }, { batters: readTeamBlock(secondTable) }],
-      };
-      const anyBatting = entry.innings.some((inn) => inn.batters.some((b) => b.status !== "dnb"));
-      if (!anyBatting) {
+      const batters = readBattingTable(table);
+      if (!batters.some((b) => b.status !== "dnb")) {
         alert("Enter at least one batter's result before saving.");
         return;
       }
-      STORE.saveEntry(fixture.id, entry);
-      onSaved(entry);
+      STORE.saveEntry(fixture.id, { batters });
+      onSaved({ batters });
     });
 
     const delBtn = container.querySelector("#deleteResultBtn");
