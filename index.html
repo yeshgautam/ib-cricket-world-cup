@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IB Cricket League 2027</title>
+<link rel="icon" href="favicon.svg" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="page">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="brand-badge">🏏</div>
+      <div class="brand-name">IB Cricket</div>
+    </div>
+    <div class="brand-links">
+      <a href="standings.html">Standings</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">MATCHES</div>
+
+    <div class="toolbar">
+      <div class="day-nav">
+        <button id="prevDay" title="Previous day">‹</button>
+        <div class="day-label" id="dayLabel">-</div>
+        <button id="nextDay" title="Next day">›</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select id="teamFilter"></select>
+        <button class="today-btn" id="simNextBtn">Simulate next day ▶</button>
+        <button class="today-btn" id="simEndBtn">Simulate season ⏭</button>
+        <button class="today-btn" id="resetBtn">Reset ⟲</button>
+      </div>
+    </div>
+
+    <div id="matchArea"></div>
+
+    <div class="card-footer">
+      <span id="seasonProgress"></span>
+      <a href="standings.html">Full standings ↗</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/prng.js"></script>
+<script src="js/data.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/simulate.js"></script>
+<script src="js/season.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

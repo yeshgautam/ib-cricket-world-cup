@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Match — IB Cricket League 2027</title>
+<link rel="icon" href="favicon.svg" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <div class="back-row">
+      <a href="index.html">← Back to matches</a>
+    </div>
+
+    <div class="score-summary" id="scoreSummary"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="summary">Summary</button>
+      <button class="tab" data-tab="scorecard">Scorecard</button>
+      <button class="tab" data-tab="commentary">Commentary</button>
+    </div>
+
+    <div class="tab-content" id="tabContent"></div>
+  </div>
+</div>
+
+<script src="js/prng.js"></script>
+<script src="js/data.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/simulate.js"></script>
+<script src="js/season.js"></script>
+<script src="js/match.js"></script>
+</body>
+</html>
