@@ -334,6 +334,16 @@ a {
   white-space: nowrap;
 }
 
+.schedule-date-header {
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  background: #f0f6ff;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
 .card-footer {
   display: flex;
   justify-content: space-between;

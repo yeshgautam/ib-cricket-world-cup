@@ -93,14 +93,11 @@
   }
 
   function withResults(fixtures) {
-    return fixtures.map((f) => {
-      const entry = STORE.getEntry(f.id);
-      return { fixture: f, result: entry ? AUTOFILL.buildMatchResult(f, entry) : null };
-    });
+    return fixtures.map((f) => ({ fixture: f, result: RESOLVE.resolveResult(f) }));
   }
 
   function groupComplete(groupKey) {
-    return groupFixtures(groupKey).every((f) => STORE.hasEntry(f.id));
+    return groupFixtures(groupKey).every((f) => !!RESOLVE.resolveResult(f));
   }
 
   function groupStandings(groupKey) {
@@ -108,7 +105,7 @@
     if (!state) return [];
     const teams = groupKey === "A" ? state.groupA : state.groupB;
     const results = groupFixtures(groupKey)
-      .map((f) => (STORE.hasEntry(f.id) ? AUTOFILL.buildMatchResult(f, STORE.getEntry(f.id)) : null))
+      .map((f) => RESOLVE.resolveResult(f))
       .filter(Boolean);
     return SEASON.computeStandings(results, teams, 50, { win: 3, tie: 1, loss: 0 });
   }
@@ -136,13 +133,13 @@
 
   function knockoutComplete() {
     const fx = knockoutFixtures();
-    return fx && fx.every((f) => STORE.hasEntry(f.id));
+    return fx && fx.every((f) => !!RESOLVE.resolveResult(f));
   }
 
   function finalGroupTeams() {
     const fx = knockoutFixtures();
     if (!fx) return null;
-    const results = fx.map((f) => (STORE.hasEntry(f.id) ? AUTOFILL.buildMatchResult(f, STORE.getEntry(f.id)) : null));
+    const results = fx.map((f) => RESOLVE.resolveResult(f));
     if (results.some((r) => !r || r.tied)) return null; // knockout can't tie through to next round without a winner
     return results.map((r) => r.winner);
   }
@@ -159,14 +156,14 @@
 
   function finalGroupComplete() {
     const fx = finalGroupFixtures();
-    return fx && fx.every((f) => STORE.hasEntry(f.id));
+    return fx && fx.every((f) => !!RESOLVE.resolveResult(f));
   }
 
   function finalGroupStandings() {
     const teams = finalGroupTeams();
     const fx = finalGroupFixtures();
     if (!teams || !fx) return [];
-    const results = fx.map((f) => (STORE.hasEntry(f.id) ? AUTOFILL.buildMatchResult(f, STORE.getEntry(f.id)) : null)).filter(Boolean);
+    const results = fx.map((f) => RESOLVE.resolveResult(f)).filter(Boolean);
     return SEASON.computeStandings(results, teams, 50, { win: 3, tie: 1, loss: 0 });
   }
 
@@ -187,14 +184,13 @@
     for (let g = 1; g <= 7; g++) {
       const f = makeFixture(`gf-${g}`, finalists[0], finalists[1], `Grand Final · Game ${g}`, 40 + g);
       fixtures.push(f);
-      const entry = STORE.getEntry(f.id);
-      if (entry) {
-        const r = AUTOFILL.buildMatchResult(f, entry);
+      const r = RESOLVE.resolveResult(f);
+      if (r) {
         if (r.winner === finalists[0]) winsA++;
         else if (r.winner === finalists[1]) winsB++;
         if (winsA >= 4 || winsB >= 4) break;
       } else {
-        break; // stop at the next unplayed game
+        break; // stop at the next unplayed (NZ) game
       }
     }
     return fixtures;
@@ -207,9 +203,8 @@
     let winsA = 0,
       winsB = 0;
     fx.forEach((f) => {
-      const entry = STORE.getEntry(f.id);
-      if (!entry) return;
-      const r = AUTOFILL.buildMatchResult(f, entry);
+      const r = RESOLVE.resolveResult(f);
+      if (!r) return;
       if (r.winner === finalists[0]) winsA++;
       else if (r.winner === finalists[1]) winsB++;
     });

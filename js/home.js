@@ -5,6 +5,7 @@
   const dates = season.dates;
   let viewIdx = 0;
   let filterTeam = "ALL";
+  let viewMode = "day"; // 'day' | 'full'
 
   function fmtDate(dstr) {
     const d = new Date(dstr + "T00:00:00Z");
@@ -62,6 +63,20 @@
     document.getElementById("dayLabel").innerHTML = `${fmtDate(date)}<div class="sub">Day ${viewIdx + 1} of ${dates.length}</div>`;
     document.getElementById("prevDay").disabled = viewIdx <= 0;
     document.getElementById("nextDay").disabled = viewIdx >= dates.length - 1;
+  }
+
+  function renderFullSchedule() {
+    const order = { Morning: 0, Evening: 1 };
+    const html = dates
+      .map((date) => {
+        const matches = SEASON.matchesOnDate(season, date).sort((a, b) => order[a.fixture.session] - order[b.fixture.session]);
+        if (!matches.length) return "";
+        return `<div class="schedule-date-header">${fmtDate(date)}</div>
+        <div class="match-grid">${matches.map((m) => matchBlockHtml(m.fixture, m.result)).join("")}</div>`;
+      })
+      .join("");
+    document.getElementById("matchArea").innerHTML = html;
+    attachBlockClicks();
   }
 
   function renderTeamView(code) {
@@ -123,17 +138,28 @@
   }
 
   function render() {
-    const totalPlayed = season.fixtures.filter((f) => STORE.hasEntry(f.id)).length;
-    document.getElementById("tournamentStatus").textContent = totalPlayed === 0 ? "Tournament has not started" : `${totalPlayed} of ${season.fixtures.length} matches played`;
+    const nzFixtures = season.fixtures.filter((f) => RESOLVE.needsManualEntry(f));
+    const nzEntered = nzFixtures.filter((f) => STORE.hasEntry(f.id)).length;
+    const totalDecided = season.fixtures.length - nzFixtures.length + nzEntered;
+    document.getElementById("tournamentStatus").textContent = `New Zealand: ${nzEntered} of ${nzFixtures.length} results entered`;
 
+    const fullBtn = document.getElementById("fullScheduleBtn");
     if (filterTeam === "ALL") {
-      document.querySelector(".day-nav").style.display = "flex";
-      renderDayView();
+      fullBtn.style.display = "inline-block";
+      fullBtn.textContent = viewMode === "day" ? `Full schedule (${season.fixtures.length}) ⇅` : "Day view ⇅";
+      if (viewMode === "day") {
+        document.querySelector(".day-nav").style.display = "flex";
+        renderDayView();
+      } else {
+        document.querySelector(".day-nav").style.display = "none";
+        renderFullSchedule();
+      }
     } else {
+      fullBtn.style.display = "none";
       document.querySelector(".day-nav").style.display = "none";
       renderTeamView(filterTeam);
     }
-    document.getElementById("seasonProgress").textContent = `${totalPlayed} of ${season.fixtures.length} matches played`;
+    document.getElementById("seasonProgress").textContent = `${totalDecided} of ${season.fixtures.length} matches decided · New Zealand ${nzEntered}/${nzFixtures.length} entered`;
   }
 
   function populateTeamFilter() {
@@ -149,6 +175,11 @@
       render();
     });
   }
+
+  document.getElementById("fullScheduleBtn").addEventListener("click", () => {
+    viewMode = viewMode === "day" ? "full" : "day";
+    render();
+  });
 
   document.getElementById("prevDay").addEventListener("click", () => {
     viewIdx = Math.max(0, viewIdx - 1);

@@ -1,6 +1,6 @@
-// Wires the schedule + manually-entered results (via js/store.js + js/autofill.js) into
-// one season view, and derives the points table. Nothing is simulated: a match has no
-// result until someone enters one.
+// Wires the schedule + results into one season view, and derives the points table.
+// Result resolution (New Zealand manual, everyone else auto-simulated) lives in
+// js/resolve.js so every page applies the same rule.
 (function (global) {
   function buildSeason() {
     const fixtures = SCHEDULE.generateFixtures();
@@ -11,9 +11,7 @@
   }
 
   function getResult(fixture) {
-    const entry = STORE.getEntry(fixture.id);
-    if (!entry) return null;
-    return AUTOFILL.buildMatchResult(fixture, entry);
+    return RESOLVE.resolveResult(fixture);
   }
 
   function playedResults(season) {
