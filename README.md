@@ -1,49 +1,61 @@
 # IB Cricket League 2027
 
-A static, zero-build site for a 12-team fictional ODI league. Everything —
-the fixture list, ball-by-ball match simulation, scorecards, and the points
-table — is generated in the browser from plain JS data files, deterministically,
-so results never change on reload unless the underlying data changes.
+A static, zero-build site for a 12-team fictional ODI league. The fixture list is
+generated in the browser; **match results are entered manually** (you play the game
+yourself and type in what happened) and saved to `localStorage` in your browser — there
+is no backend, so entries stay on whichever device/browser you enter them on.
 
 ## Pages
 
-- `index.html` — the "MATCHES" home page (styled after the Google cricket
-  score box). Browse by day, or filter to one team. A **Simulate next day**
-  button advances the season's reveal horizon by one day-of-matches;
-  **Simulate season** reveals every remaining match at once. Progress is
-  saved in `localStorage`, so it persists across reloads until you hit Reset.
-- `match.html?id=mNNN` — full match detail: Summary (Player of the Match +
-  condensed innings), Scorecard (full batting/bowling tables per team, fall
-  of wickets), and Commentary (wickets & sixes, latest first).
-- `standings.html` — points table (win = 2, tie/no result = 1, loss = 0),
-  ranked by points then Net Run Rate, as of however far the season has been
-  simulated.
+- `index.html` — the "MATCHES" home page. Browse the schedule by day, or filter to one
+  team (e.g. New Zealand) to see just their fixtures with a direct "Enter score" link.
+  Nothing is simulated: every match shows "Scheduled" until a result is entered.
+- `match.html?id=...` — shows the entry form for an unplayed match, or (once a result
+  exists) Summary / Scorecard / Key Moments tabs. Works for both league and playoff
+  matches. "Edit result" re-opens the form, pre-filled.
+- `standings.html` — league points table (win = 2, tie/no result = 1, loss = 0), ranked
+  by points then Net Run Rate, with a Last-5 form strip.
+- `stats.html` — tournament leaderboards (Runs, Wickets, Highest Scores, Best Bowling
+  Figures), aggregated from every entered result.
+- `players.html` — pick a team, see its 11-player squad with season stats.
+- `bracket.html` — the playoff bracket (see below). Has its own "Generate playoff
+  bracket from current standings" action once at least 9 teams have a played match.
 
-## How the league is built
+## Entering a result
 
-- **Teams**: `js/data.js` — 12 national teams with a 0–100 rating loosely
-  reflecting recent (2023–2026) ODI form/rankings, plus a home venue.
-- **Squads**: also `js/data.js` — 11 placeholder players per team
-  (`{CODE} 1`…`{CODE} 11`), generated from a role template (openers, top
-  order, all-rounders, keeper, bowlers) so each player has a batting and
-  bowling skill derived from the team rating. **Swap in real squads later**
-  by editing `ROLE_TEMPLATE`/`buildSquad` in `js/data.js` — nothing else in
-  the app needs to change as long as each team still has 11 named players.
-- **Schedule**: `js/schedule.js` — a standard circle-method round robin,
-  played 4 times per pair (66 pairs × 4 = 264 matches), 2 home + 2 away per
-  pair. One morning (10:00) and one evening (7:00 PM) match per day, with a
-  rest day between rounds. Season starts January 1, 2027.
-- **Simulation**: `js/simulate.js` — a seeded, deterministic ball-by-ball
-  50-over simulator. Outcome odds are weighted by the batter's vs. bowler's
-  skill (derived from team rating), adjusted for powerplay/death overs and
-  required-run-rate pressure when chasing. Produces full batting/bowling
-  cards, fall of wickets, extras, and Player of the Match.
-- **Standings**: `js/season.js` — aggregates results into a points table
-  with ICC-style Net Run Rate.
+Per match you enter, per batter: **runs, 4s, 6s, and whether they got out** (plus an
+optional over-of-dismissal for the fall-of-wickets list). That's it — balls faced,
+strike rate, extras, the full bowling card, dismissal text ("c X b Y"), and Player of
+the Match are all derived automatically (`js/autofill.js`), deterministically seeded
+per match so the same entry always produces the same scorecard.
 
-Because the RNG is seeded per match ID, the exact same schedule always
-produces the exact same results — editing ratings or squads will change
-outcomes, but reloading the page will not.
+## How it's built
+
+- **Teams**: `js/data.js` — 12 national teams with a 0–100 rating loosely reflecting
+  recent (2023–2026) ODI form/rankings, plus a home venue. Used only for cosmetic
+  ordering/venues now that results are manual, not simulated.
+- **Squads**: also `js/data.js` — 11 placeholder players per team (`{CODE} 1`…`{CODE}
+  11}`), generated from a role template (openers, top order, all-rounders, keeper,
+  bowlers). **Swap in real names later** by editing `buildSquad` in `js/data.js` —
+  nothing else needs to change.
+- **Schedule**: `js/schedule.js` — a circle-method round robin, played 4 times per pair
+  (66 pairs × 4 = 264 matches), 2 home + 2 away per pair. One morning (10:00) and one
+  evening (7:00 PM) match per day, with a rest day between rounds. Season starts
+  January 1, 2027.
+- **Results store**: `js/store.js` — a thin `localStorage` CRUD layer keyed by match id.
+- **Autofill engine**: `js/autofill.js` — expands a minimal entry (runs/4s/6s/out per
+  batter) into a full scorecard: balls faced (from an assumed strike-rate range),
+  extras, a 5-bowler bowling card sized to match the real overs/wickets/runs, dismissal
+  text, fall of wickets, result, and Player of the Match.
+- **Standings**: `js/season.js` — aggregates played results into a points table with
+  ICC-style Net Run Rate (a team bowled out is deemed to have used the full 50-over
+  quota, for both its own and the bowling side's NRR figure).
+- **Playoffs**: `js/bracket.js` — seeds the top 9 from the current league standings
+  (rank 1 gets a bye; ranks 2–9 split into two groups of 4), runs the group stage
+  (win = 3, washout/tie = 1, loss = 0), picks the better-placed 3rd-place team as a
+  wildcard, runs the 3-match knockout, the 3-team final group, and a best-of-7 Grand
+  Final — stopping as soon as one side reaches 4 wins. Every playoff match reuses the
+  same entry form and autofill engine as the league.
 
 ## Running locally
 

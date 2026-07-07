@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>IB Cricket League 2027</title>
+<title>Players — IB Cricket League 2027</title>
 <link rel="icon" href="favicon.svg" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -14,32 +14,16 @@
       <div class="brand-badge">🏏</div>
       <div class="brand-name">IB Cricket</div>
     </div>
-    <div class="brand-links">
-      <span id="tournamentStatus"></span>
-    </div>
   </div>
 
   <div class="card">
-    <div class="card-header">MATCHES</div>
+    <div class="card-header">PLAYERS</div>
     <div id="tabbarMount"></div>
-
     <div class="toolbar">
-      <div class="day-nav">
-        <button id="prevDay" title="Previous day">‹</button>
-        <div class="day-label" id="dayLabel">-</div>
-        <button id="nextDay" title="Next day">›</button>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <select id="teamFilter"></select>
-      </div>
+      <select id="teamSel"></select>
+      <span style="font-size:11px; color:var(--text-faint);">Placeholder squads — real names TBD</span>
     </div>
-
-    <div id="matchArea"></div>
-
-    <div class="card-footer">
-      <span id="seasonProgress"></span>
-      <a href="standings.html">Full standings ↗</a>
-    </div>
+    <div style="padding:16px 18px; overflow-x:auto;" id="playersBody"></div>
   </div>
 </div>
 
@@ -49,7 +33,8 @@
 <script src="js/store.js"></script>
 <script src="js/autofill.js"></script>
 <script src="js/season.js"></script>
+<script src="js/playerstats.js"></script>
 <script src="js/tabbar.js"></script>
-<script src="js/home.js"></script>
+<script src="js/players.js"></script>
 </body>
 </html>

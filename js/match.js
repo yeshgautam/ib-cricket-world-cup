@@ -2,18 +2,20 @@
   const params = new URLSearchParams(window.location.search);
   const matchId = params.get("id");
   const season = SEASON.buildSeason();
-  const m = season.byId[matchId];
+  const fixture = season.byId[matchId] || BRACKET.getFixtureById(matchId);
+  const isPlayoff = !season.byId[matchId];
+  const backHref = isPlayoff ? "bracket.html" : "index.html";
+  const backLabel = isPlayoff ? "← Back to bracket" : "← Back to matches";
 
-  if (!m) {
-    document.querySelector(".page").innerHTML = `<div class="card"><div class="empty-note">Match not found. <a href="index.html" style="color:var(--teal-light);">Back to matches</a></div></div>`;
+  if (!fixture) {
+    document.querySelector(".page").innerHTML = `<div class="card"><div class="empty-note">Match not found. <a href="index.html" style="color:var(--blue);">Back to matches</a></div></div>`;
     return;
   }
+  document.querySelector(".back-row a").setAttribute("href", backHref);
+  document.querySelector(".back-row a").textContent = backLabel;
 
-  const teamA = DATA.TEAMS_BY_CODE[m.teamA];
-  const teamB = DATA.TEAMS_BY_CODE[m.teamB];
-  const inn1 = m.innings[0],
-    inn2 = m.innings[1];
-  const innByTeam = { [inn1.battingTeam]: inn1, [inn2.battingTeam]: inn2 };
+  const teamA = DATA.TEAMS_BY_CODE[fixture.teamA];
+  const teamB = DATA.TEAMS_BY_CODE[fixture.teamB];
 
   function fmtDate(dstr) {
     const d = new Date(dstr + "T00:00:00Z");
@@ -27,8 +29,20 @@
     return { code, num, team: DATA.TEAMS_BY_CODE[code] };
   }
 
-  // ---------- score summary ----------
-  function renderSummaryHeader() {
+  function showEntryForm() {
+    document.getElementById("tabsWrap").style.display = "none";
+    document.getElementById("entryWrap").style.display = "block";
+    document.getElementById("scoreSummary").innerHTML = `
+      <div class="sub-line">${fmtDate(fixture.date)} · ${fixture.session} · ${fixture.time} · ${fixture.venue}</div>
+      <div class="team-row"><div class="team-id"><span class="flag" style="font-size:22px;">${teamA.flag}</span><span class="tname">${teamA.name}</span></div></div>
+      <div class="team-row"><div class="team-id"><span class="flag" style="font-size:22px;">${teamB.flag}</span><span class="tname">${teamB.name}</span></div></div>
+      <div class="result-line" style="color:var(--text-faint);">Not yet played — enter the result below</div>
+    `;
+    ENTRYFORM.mountEntryForm(document.getElementById("entryWrap"), fixture, () => render());
+  }
+
+  function renderSummaryHeader(m) {
+    const innByTeam = { [m.innings[0].battingTeam]: m.innings[0], [m.innings[1].battingTeam]: m.innings[1] };
     const rows = [teamA, teamB]
       .map((t) => {
         const inn = innByTeam[t.code];
@@ -41,27 +55,17 @@
       .join("");
 
     document.getElementById("scoreSummary").innerHTML = `
-      <div class="sub-line">${fmtDate(m.fixture.date)} · ${m.fixture.session} · ODI · IB Cricket League 2027</div>
+      <div class="sub-line">${fmtDate(fixture.date)} · ${fixture.session} · ${fixture.venue}</div>
       ${rows}
       <div class="result-line">${m.result}</div>
     `;
   }
 
-  // ---------- tabs ----------
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach((t) =>
-    t.addEventListener("click", () => {
-      tabs.forEach((x) => x.classList.remove("active"));
-      t.classList.add("active");
-      renderTab(t.dataset.tab);
-    })
-  );
-
-  function potmInfo() {
+  function potmInfo(m) {
     const p = playerLabel(m.potm);
     let batLine = "",
       bowlLine = "";
-    [inn1, inn2].forEach((inn) => {
+    m.innings.forEach((inn) => {
       const b = inn.battingCard.find((x) => x.name === m.potm);
       if (b) batLine = `${b.runs} (${b.balls})`;
       const bw = inn.bowlingCard.find((x) => x.name === m.potm);
@@ -73,7 +77,6 @@
 
   function inningsSummaryBlock(inn) {
     const team = DATA.TEAMS_BY_CODE[inn.battingTeam];
-    const bowlTeam = DATA.TEAMS_BY_CODE[inn.bowlingTeam];
     const topBat = inn.battingCard
       .slice()
       .sort((a, b) => b.runs - a.runs)
@@ -96,8 +99,8 @@
     </div>`;
   }
 
-  function renderSummary() {
-    const { p, stat } = potmInfo();
+  function renderSummary(m) {
+    const { p, stat } = potmInfo(m);
     return `
       <div class="potm-banner">
         <div>
@@ -106,17 +109,16 @@
         </div>
         <div class="potm-avatar" style="background:${p.team.color};">${p.num}</div>
       </div>
-      ${inningsSummaryBlock(inn1)}
-      ${inningsSummaryBlock(inn2)}
+      ${inningsSummaryBlock(m.innings[0])}
+      ${inningsSummaryBlock(m.innings[1])}
       <div class="meta-block">
-        <div><b>Toss:</b> ${DATA.TEAMS_BY_CODE[m.toss.winner].name} won the toss and elected to ${m.toss.decision} first</div>
+        <div><b>${DATA.TEAMS_BY_CODE[m.toss.winner].name}</b> batted first</div>
         <div><b>Venue:</b> ${m.venue}</div>
       </div>
     `;
   }
 
-  // ---------- scorecard ----------
-  let scorecardTeam = m.teamA;
+  let scorecardTeam = fixture.teamA;
 
   function scorecardBattingTable(inn) {
     const rows = inn.battingCard
@@ -148,13 +150,14 @@
     </table>`;
   }
 
-  function renderScorecard() {
+  function renderScorecard(m) {
+    const innByTeam = { [m.innings[0].battingTeam]: m.innings[0], [m.innings[1].battingTeam]: m.innings[1] };
     const inn = innByTeam[scorecardTeam];
     const fowLine = inn.fow.map((f) => `${f.score}/${f.wicket} (${f.batter}, ${f.over} ov)`).join(", ") || "—";
     return `
       <div class="team-toggle">
-        <button data-t="${m.teamA}" class="${scorecardTeam === m.teamA ? "active" : ""}">${teamA.flag} ${teamA.name}</button>
-        <button data-t="${m.teamB}" class="${scorecardTeam === m.teamB ? "active" : ""}">${teamB.flag} ${teamB.name}</button>
+        <button data-t="${fixture.teamA}" class="${scorecardTeam === fixture.teamA ? "active" : ""}">${teamA.flag} ${teamA.name}</button>
+        <button data-t="${fixture.teamB}" class="${scorecardTeam === fixture.teamB ? "active" : ""}">${teamB.flag} ${teamB.name}</button>
       </div>
       ${scorecardBattingTable(inn)}
       <div class="fow-block"><b>Fall of wickets:</b> ${fowLine}</div>
@@ -163,44 +166,75 @@
     `;
   }
 
-  function attachScorecardToggle() {
+  function renderMoments(m) {
+    function block(inn, label) {
+      const items = inn.fow
+        .slice()
+        .reverse()
+        .map((f) => `<div class="moment-item"><span class="ov">${f.over}</span><span>WICKET! ${f.batter} ${f.howOut} — ${f.score}/${f.wicket}</span></div>`)
+        .join("");
+      return `<div class="moments-inn">
+        <h4>${label}</h4>
+        ${items || '<div class="empty-note" style="padding:12px 0;">No wickets recorded.</div>'}
+      </div>`;
+    }
+    return block(m.innings[0], `${DATA.TEAMS_BY_CODE[m.innings[0].battingTeam].name} innings`) + block(m.innings[1], `${DATA.TEAMS_BY_CODE[m.innings[1].battingTeam].name} innings`);
+  }
+
+  function attachScorecardToggle(m) {
     document.querySelectorAll(".team-toggle button").forEach((btn) => {
       btn.addEventListener("click", () => {
         scorecardTeam = btn.dataset.t;
-        document.getElementById("tabContent").innerHTML = renderScorecard();
-        attachScorecardToggle();
+        document.getElementById("tabContent").innerHTML = renderScorecard(m);
+        attachScorecardToggle(m);
       });
     });
   }
 
-  // ---------- commentary ----------
-  function renderCommentary() {
-    function block(inn, events, label) {
-      const items = events
-        .slice()
-        .reverse()
-        .map((e) => {
-          const cls = e.text.startsWith("WICKET") ? "wicket" : e.text.startsWith("SIX") ? "six" : "";
-          return `<div class="commentary-item ${cls}"><span class="ov">${e.over}</span><span>${e.text}</span></div>`;
-        })
-        .join("");
-      return `<div class="commentary-inn">
-        <h4>${label}</h4>
-        ${items || '<div class="empty-note" style="padding:12px 0;">No boundaries or wickets — a quiet passage of play.</div>'}
-      </div>`;
-    }
-    return block(inn1, m.events[0], `${DATA.TEAMS_BY_CODE[inn1.battingTeam].name} innings`) + block(inn2, m.events[1], `${DATA.TEAMS_BY_CODE[inn2.battingTeam].name} innings`);
-  }
-
-  function renderTab(tab) {
+  function renderTab(m, tab) {
     const el = document.getElementById("tabContent");
-    if (tab === "summary") el.innerHTML = renderSummary();
+    if (tab === "summary") el.innerHTML = renderSummary(m);
     else if (tab === "scorecard") {
-      el.innerHTML = renderScorecard();
-      attachScorecardToggle();
-    } else el.innerHTML = renderCommentary();
+      el.innerHTML = renderScorecard(m);
+      attachScorecardToggle(m);
+    } else el.innerHTML = renderMoments(m);
   }
 
-  renderSummaryHeader();
-  renderTab("summary");
+  let currentMatch = null;
+  let activeTab = "summary";
+
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach((t) =>
+    t.addEventListener("click", () => {
+      tabs.forEach((x) => x.classList.remove("active"));
+      t.classList.add("active");
+      activeTab = t.dataset.tab;
+      renderTab(currentMatch, activeTab);
+    })
+  );
+
+  document.getElementById("editResultBtn").addEventListener("click", () => {
+    document.getElementById("tabsWrap").style.display = "none";
+    document.getElementById("entryWrap").style.display = "block";
+    ENTRYFORM.mountEntryForm(document.getElementById("entryWrap"), fixture, () => render());
+  });
+
+  function showResult(m) {
+    currentMatch = m;
+    document.getElementById("entryWrap").style.display = "none";
+    document.getElementById("tabsWrap").style.display = "block";
+    renderSummaryHeader(m);
+    tabs.forEach((x) => x.classList.remove("active"));
+    document.querySelector('.tab[data-tab="summary"]').classList.add("active");
+    activeTab = "summary";
+    renderTab(m, "summary");
+  }
+
+  function render() {
+    const result = SEASON.getResult(fixture);
+    if (result) showResult(result);
+    else showEntryForm();
+  }
+
+  render();
 })();

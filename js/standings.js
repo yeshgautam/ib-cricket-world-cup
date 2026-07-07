@@ -1,19 +1,24 @@
 (function () {
-  const HORIZON_KEY = "ib-cricket-horizon-2027";
+  document.getElementById("tabbarMount").outerHTML = TABBAR.renderTabbar("standings");
+
   const season = SEASON.buildSeason();
-  const dates = season.dates;
-  let horizon = parseInt(localStorage.getItem(HORIZON_KEY), 10);
-  if (isNaN(horizon) || horizon < 0 || horizon >= dates.length) horizon = 0;
+  const results = SEASON.playedResults(season);
+  const rows = SEASON.computeStandings(results);
 
-  const revealedResults = season.results.filter((m) => dates.indexOf(m.fixture.date) <= horizon);
-  const rows = SEASON.computeStandings(revealedResults);
+  const played = results.length;
+  document.getElementById("asOfLabel").textContent =
+    played === 0 ? "Tournament has not started — no results entered yet" : `${played} of ${season.fixtures.length} matches played`;
 
-  function fmtDate(dstr) {
-    const d = new Date(dstr + "T00:00:00Z");
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  function formHtml(form) {
+    if (!form.length) return `<span style="color:var(--text-faint); font-size:11px;">—</span>`;
+    return `<div class="form-strip">${form
+      .map((r) => {
+        const cls = r === "W" ? "w" : r === "L" ? "l" : "t";
+        const glyph = r === "W" ? "✓" : r === "L" ? "✕" : "T";
+        return `<span class="form-dot ${cls}">${glyph}</span>`;
+      })
+      .join("")}</div>`;
   }
-
-  document.getElementById("asOfLabel").textContent = `As of ${fmtDate(dates[horizon])} — season simulated through day ${horizon + 1} of ${dates.length}`;
 
   document.getElementById("standingsBody").innerHTML = rows
     .map(
@@ -24,8 +29,9 @@
       <td>${r.won}</td>
       <td>${r.lost}</td>
       <td>${r.tied}</td>
-      <td><b>${r.points}</b></td>
       <td>${r.nrr > 0 ? "+" : ""}${r.nrr.toFixed(3)}</td>
+      <td><b>${r.points}</b></td>
+      <td>${formHtml(r.form)}</td>
     </tr>`
     )
     .join("");

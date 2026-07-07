@@ -14,21 +14,19 @@
       <div class="brand-badge">🏏</div>
       <div class="brand-name">IB Cricket</div>
     </div>
-    <div class="brand-links">
-      <a href="index.html">Matches</a>
-    </div>
   </div>
 
   <div class="card">
     <div class="card-header">STANDINGS</div>
+    <div id="tabbarMount"></div>
     <div class="toolbar">
       <span id="asOfLabel" style="font-size:12px; color:var(--text-dim);"></span>
     </div>
-    <div style="padding:16px 18px;">
+    <div style="padding:16px 18px; overflow-x:auto;">
       <table class="standings-table">
         <thead>
           <tr>
-            <th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>T</th><th>Pts</th><th>NRR</th>
+            <th>#</th><th>Team</th><th>M</th><th>W</th><th>L</th><th>T</th><th>NRR</th><th>Pts</th><th>Last 5</th>
           </tr>
         </thead>
         <tbody id="standingsBody"></tbody>
@@ -44,8 +42,10 @@
 <script src="js/prng.js"></script>
 <script src="js/data.js"></script>
 <script src="js/schedule.js"></script>
-<script src="js/simulate.js"></script>
+<script src="js/store.js"></script>
+<script src="js/autofill.js"></script>
 <script src="js/season.js"></script>
+<script src="js/tabbar.js"></script>
 <script src="js/standings.js"></script>
 </body>
 </html>

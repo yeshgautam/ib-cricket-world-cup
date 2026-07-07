@@ -16,21 +16,30 @@
 
     <div class="score-summary" id="scoreSummary"></div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="summary">Summary</button>
-      <button class="tab" data-tab="scorecard">Scorecard</button>
-      <button class="tab" data-tab="commentary">Commentary</button>
+    <div id="tabsWrap" style="display:none;">
+      <div class="tabs">
+        <button class="tab active" data-tab="summary">Summary</button>
+        <button class="tab" data-tab="scorecard">Scorecard</button>
+        <button class="tab" data-tab="moments">Key Moments</button>
+      </div>
+      <div class="tab-content" id="tabContent"></div>
+      <div class="entry-actions">
+        <button class="pill-btn" id="editResultBtn">Edit result</button>
+      </div>
     </div>
 
-    <div class="tab-content" id="tabContent"></div>
+    <div id="entryWrap" style="display:none;"></div>
   </div>
 </div>
 
 <script src="js/prng.js"></script>
 <script src="js/data.js"></script>
 <script src="js/schedule.js"></script>
-<script src="js/simulate.js"></script>
+<script src="js/store.js"></script>
+<script src="js/autofill.js"></script>
 <script src="js/season.js"></script>
+<script src="js/bracket.js"></script>
+<script src="js/entry-form.js"></script>
 <script src="js/match.js"></script>
 </body>
 </html>
